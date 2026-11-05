@@ -118,9 +118,11 @@ small {
 }
 .shell {
   min-height: 100vh;
+  min-height: 100dvh;
 }
 .sidebar {
   width: var(--sidebar);
+  height: 100vh;
   height: 100dvh;
   position: fixed;
   left: 0;
@@ -129,8 +131,15 @@ small {
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
-  padding: 32px 20px 0;
+  padding: 32px 20px env(safe-area-inset-bottom, 0px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
   z-index: 30;
+}
+/* Keep every menu item and the profile reachable on short viewports. */
+.sidebar > * {
+  flex-shrink: 0;
 }
 .brand {
   display: flex;
@@ -346,7 +355,7 @@ small {
 main {
   max-width: 1580px;
   margin: auto;
-  padding: 41px 42px 26px;
+  padding: 41px 42px calc(26px + env(safe-area-inset-bottom, 0px));
 }
 .page-heading {
   display: flex;
@@ -1563,7 +1572,7 @@ textarea {
     padding: 0 28px;
   }
   main {
-    padding: 32px 28px;
+    padding: 32px 28px calc(32px + env(safe-area-inset-bottom, 0px));
   }
   .stats-grid {
     gap: 12px;
@@ -1702,7 +1711,7 @@ textarea {
     z-index: 29;
   }
   main {
-    padding: 28px 19px;
+    padding: 28px 19px calc(28px + env(safe-area-inset-bottom, 0px));
   }
   .page-heading {
     align-items: flex-start;
