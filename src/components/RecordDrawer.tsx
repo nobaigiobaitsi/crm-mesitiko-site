@@ -68,16 +68,16 @@ export function RecordDrawer({
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setError("");
-    const updated = {
-      ...entry,
-      data: {
-        ...(entry.kind === "property" ? savePublicDraft(draft) : draft),
-        title: draft.title.trim(),
-        ...(entry.kind === "property" ? { code: draft.code.trim() } : {}),
-      },
-      assigned_to: assigned,
-    };
     try {
+      const updated = {
+        ...entry,
+        data: {
+          ...(entry.kind === "property" ? savePublicDraft(draft) : draft),
+          title: draft.title.trim(),
+          ...(entry.kind === "property" ? { code: draft.code.trim() } : {}),
+        },
+        assigned_to: assigned,
+      };
       validateEntry(updated, data.entries);
       await onSave(updated, !isNew);
     } catch (error) {
@@ -209,7 +209,9 @@ export function RecordDrawer({
                   ) : field.type === "textarea" ? (
                     <textarea
                       rows={6}
-                      maxLength={10000}
+                      maxLength={
+                        field.key.startsWith("site_features_") ? 31000 : 20000
+                      }
                       value={draft[field.key] || ""}
                       onChange={(event) =>
                         setDraft({ ...draft, [field.key]: event.target.value })
@@ -228,6 +230,7 @@ export function RecordDrawer({
                       }
                     />
                   )}
+                  {field.help && <small>{field.help}</small>}
                 </label>
               ))}
               <label className="wide">

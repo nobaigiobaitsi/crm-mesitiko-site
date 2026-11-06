@@ -32,3 +32,49 @@ test("editing public fields preserves legacy content and private fields, removes
   assert.equal(saved.notes, "private");
   assert.equal(saved.site_description_el, undefined);
 });
+
+test("public text and feature lists survive editing and publication in both languages", async () => {
+  const { publicPayload } =
+    await import("../supabase/functions/_shared/publication.js");
+  const draft = publicDraft({
+    code: "001",
+    area: "Athens",
+    publication: "Εγκεκριμένο",
+    status: "Διαθέσιμο",
+    type: "Διαμέρισμα",
+  });
+  for (const lang of ["el", "en"]) {
+    draft[`site_title_${lang}`] = "Home";
+    draft[`site_path_${lang}`] = lang === "el" ? "/home/" : "/en/home/";
+    draft[`site_description_${lang}`] =
+      "First  line\n\nSecond paragraph\n• Item <script>";
+    draft[`site_features_${lang}`] = "✔ Parking\r\n\r\n• Balcony\nHeating";
+  }
+  const saved = savePublicDraft(draft);
+  const payload = publicPayload(saved, [{ src: "crm://photo.jpg" }]);
+  const reopened = publicDraft(saved);
+  for (const lang of ["el", "en"]) {
+    assert.equal(
+      payload.locales[lang].description,
+      draft[`site_description_${lang}`],
+    );
+    assert.deepEqual(payload.locales[lang].features, [
+      "Parking",
+      "Balcony",
+      "Heating",
+    ]);
+    assert.equal(
+      reopened[`site_features_${lang}`],
+      "Parking\nBalcony\nHeating",
+    );
+    reopened[`site_features_${lang}`] = "";
+  }
+  assert.deepEqual(
+    JSON.parse(savePublicDraft(reopened).website_json).locales.el.features,
+    [],
+  );
+  draft.site_features_el = Array(61).fill("Feature").join("\n");
+  assert.throws(() => savePublicDraft(draft), /60/);
+  draft.site_features_el = "x".repeat(501);
+  assert.throws(() => savePublicDraft(draft), /500/);
+});

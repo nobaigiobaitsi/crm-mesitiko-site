@@ -15,6 +15,8 @@ export function publicDraft(data: RecordData): RecordData {
     site_title_en: website.locales?.en?.title || "",
     site_description_el: website.locales?.el?.description || "",
     site_description_en: website.locales?.en?.description || "",
+    site_features_el: (website.locales?.el?.features || []).join("\n"),
+    site_features_en: (website.locales?.en?.features || []).join("\n"),
     site_location_el: website.locales?.el?.address || "",
     site_location_en: website.locales?.en?.address || "",
     site_path_el: website.locales?.el?.path || "",
@@ -42,10 +44,25 @@ export function savePublicDraft(data: RecordData): RecordData {
       title: data[`site_title_${lang}`],
       cardTitle: data[`site_title_${lang}`],
       description: data[`site_description_${lang}`],
+      features: (data[`site_features_${lang}`] || "")
+        .split(/\r\n|\r|\n/)
+        .map((line: string) => line.trim().replace(/^[✔✓•]\s*/, ""))
+        .filter(Boolean),
       address: data[`site_location_${lang}`],
       cardAddress: data[`site_location_${lang}`],
       path: data[`site_path_${lang}`],
     };
+  }
+  for (const lang of ["el", "en"]) {
+    const features = website.locales[lang].features;
+    if (
+      features.length > 60 ||
+      features.some((feature: string) => feature.length > 500)
+    ) {
+      throw new Error(
+        "Χαρακτηριστικά & Παροχές: έως 60 παροχές ανά γλώσσα, με έως 500 χαρακτήρες η καθεμία.",
+      );
+    }
   }
   website.bathrooms = data.site_bathrooms ? Number(data.site_bathrooms) : null;
   website.year = data.site_year ? Number(data.site_year) : null;

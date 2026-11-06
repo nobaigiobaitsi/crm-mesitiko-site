@@ -5,6 +5,7 @@ export type Field = {
   type?: string;
   options?: string[];
   required?: boolean;
+  help?: string;
 };
 export const fields: Record<Kind, Field[]> = {
   property: [
@@ -54,12 +55,26 @@ export const fields: Record<Kind, Field[]> = {
     {
       key: "site_description_el",
       label: "Δημόσια περιγραφή · Ελληνικά",
+      help: "Οι αλλαγές γραμμής και οι κενές γραμμές διατηρούνται στο site. Απλό κείμενο, χωρίς HTML.",
       type: "textarea",
     },
     {
       key: "site_description_en",
       label: "Δημόσια περιγραφή · English",
+      help: "Οι αλλαγές γραμμής και οι κενές γραμμές διατηρούνται στο site. Απλό κείμενο, χωρίς HTML.",
       type: "textarea",
+    },
+    {
+      key: "site_features_el",
+      label: "Χαρακτηριστικά & Παροχές · Ελληνικά",
+      type: "textarea",
+      help: "Μία παροχή ανά γραμμή, έως 60 παροχές και 500 χαρακτήρες ανά παροχή. Δεν χρειάζονται κουκκίδες.",
+    },
+    {
+      key: "site_features_en",
+      label: "Χαρακτηριστικά & Παροχές · English",
+      type: "textarea",
+      help: "Μία παροχή ανά γραμμή. Συμπληρώστε ξεχωριστά την αγγλική μετάφραση. Κενή λίστα = απόκρυψη ενότητας.",
     },
     { key: "site_location_el", label: "Δημόσια τοποθεσία · Ελληνικά" },
     { key: "site_location_en", label: "Δημόσια τοποθεσία · English" },
