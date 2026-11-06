@@ -12,7 +12,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
-    "format": "prettier --write src tests index.html vite.config.ts tsconfig.json package.json README.md"
+    "format": "prettier --write src tests index.html vite.config.ts tsconfig.json package.json README.md",
+    "import:site": "node scripts/import-site.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
