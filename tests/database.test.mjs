@@ -16,7 +16,7 @@ test("migrations enforce roles, assignment, validation, audit and private photos
     photo = "20000000-0000-4000-8000-000000000001";
   try {
     await db.exec(`
-      create role anon; create role authenticated;
+      create role anon; create role authenticated; create role service_role bypassrls;
       create schema auth; create schema storage;
       create table auth.users(id uuid primary key);
       create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
@@ -39,6 +39,9 @@ test("migrations enforce roles, assignment, validation, audit and private photos
         "utf8",
       ),
     );
+    for (const migration of ["003_website_publication.sql", "004_photo_order.sql"]) {
+      await db.exec(await readFile(new URL("../supabase/" + migration, import.meta.url), "utf8"));
+    }
     for (const [id, role] of [
       [owner, "owner"],
       [tech, "technical"],

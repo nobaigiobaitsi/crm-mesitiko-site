@@ -48,8 +48,8 @@ export function PropertyGallery({
     setBusy(true);
     setError("");
     try {
-      if (photos.length + files.length > 20)
-        throw new Error("Έως 20 φωτογραφίες ανά ακίνητο.");
+      if (photos.length + files.length > 40)
+        throw new Error("Έως 40 φωτογραφίες ανά ακίνητο.");
       for (const file of files)
         await repository.upload(
           propertyId,
@@ -64,6 +64,24 @@ export function PropertyGallery({
       } catch (error) {
         setError((error as Error).message);
       }
+      setBusy(false);
+    }
+  }
+  async function move(index: number, target: number) {
+    setBusy(true);
+    setError("");
+    try {
+      const ordered = [...photos];
+      const [photo] = ordered.splice(index, 1);
+      ordered.splice(target, 0, photo);
+      await repository.reorder(
+        propertyId,
+        ordered.map((item) => item.id),
+      );
+      await refresh();
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
       setBusy(false);
     }
   }
@@ -90,7 +108,7 @@ export function PropertyGallery({
       </h3>
       <ErrorNotice message={error} />
       <div className="photo-grid">
-        {photos.map((photo) => (
+        {photos.map((photo, index) => (
           <figure key={photo.id}>
             {photo.url ? (
               <a href={photo.url} target="_blank" rel="noreferrer">
@@ -99,7 +117,37 @@ export function PropertyGallery({
             ) : (
               <p className="empty">Η εικόνα δεν είναι διαθέσιμη.</p>
             )}
-            <figcaption>{photo.caption}</figcaption>
+            <figcaption>
+              {index === 0 && <strong>Εξώφυλλο · </strong>}
+              {photo.caption}
+            </figcaption>
+            {canWrite && (
+              <div className="photo-order-actions">
+                <button
+                  type="button"
+                  disabled={busy || index === 0}
+                  onClick={() => void move(index, index - 1)}
+                  aria-label="Προηγούμενη θέση"
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  disabled={busy || index === photos.length - 1}
+                  onClick={() => void move(index, index + 1)}
+                  aria-label="Επόμενη θέση"
+                >
+                  →
+                </button>
+                <button
+                  type="button"
+                  disabled={busy || index === 0}
+                  onClick={() => void move(index, 0)}
+                >
+                  Εξώφυλλο
+                </button>
+              </div>
+            )}
             {canDelete && (
               <button
                 type="button"
@@ -148,7 +196,9 @@ export function PropertyGallery({
       )}
       <p className="field-hint">
         JPEG, PNG, WebP · Αυτόματη συμπίεση · Οι φωτογραφίες είναι διαθέσιμες
-        στους εξουσιοδοτημένους συνεργάτες.
+        στους εξουσιοδοτημένους συνεργάτες. Με «Δημοσίευση» εμφανίζονται όλες
+        στο site, με την πρώτη ως εξώφυλλο. Οι αλλαγές φωτογραφιών χρειάζονται
+        νέα δημοσίευση.
       </p>
     </section>
   );

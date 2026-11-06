@@ -10,6 +10,7 @@ export function createPhotoRepository(client: SupabaseClient) {
         .from("crm_photos")
         .select("*")
         .eq("property_id", propertyId)
+        .order("sort_order")
         .order("created_at")
         .order("id");
       if (error) throw error;
@@ -33,18 +34,23 @@ export function createPhotoRepository(client: SupabaseClient) {
         upsert: false,
       });
       if (upload.error) throw upload.error;
-      const metadata = await client
-        .from("crm_photos")
-        .insert({
-          id,
-          property_id: propertyId,
-          path,
-          caption: caption.slice(0, 200),
-        });
+      const metadata = await client.from("crm_photos").insert({
+        id,
+        property_id: propertyId,
+        path,
+        caption: caption.slice(0, 200),
+      });
       if (metadata.error) {
         await storage.remove([path]);
         throw metadata.error;
       }
+    },
+    async reorder(propertyId: string, photoIds: string[]) {
+      const { error } = await client.rpc("leaf_reorder_photos", {
+        property_id: propertyId,
+        photo_ids: photoIds,
+      });
+      if (error) throw error;
     },
     async remove(photo: Photo) {
       const file = await storage.remove([photo.path]);

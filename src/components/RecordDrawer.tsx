@@ -9,6 +9,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { publicDraft, savePublicDraft } from "../domain/website";
 import { fields } from "../domain/fields";
 import {
   canEdit,
@@ -25,6 +26,7 @@ import {
 import { validateEntry } from "../domain/records";
 import type { PhotoRepository } from "../services/photos";
 import { Badge, ErrorNotice } from "./Common";
+import { SitePublication } from "./SitePublication";
 import { PropertyGallery } from "./PropertyGallery";
 
 export function RecordDrawer({
@@ -50,7 +52,9 @@ export function RecordDrawer({
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [editing, setEditing] = useState(isNew),
-    [draft, setDraft] = useState(entry.data),
+    [draft, setDraft] = useState(
+      entry.kind === "property" ? publicDraft(entry.data) : entry.data,
+    ),
     [assigned, setAssigned] = useState(entry.assigned_to || ""),
     [error, setError] = useState(""),
     [confirm, setConfirm] = useState(false);
@@ -67,7 +71,7 @@ export function RecordDrawer({
     const updated = {
       ...entry,
       data: {
-        ...draft,
+        ...(entry.kind === "property" ? savePublicDraft(draft) : draft),
         title: draft.title.trim(),
         ...(entry.kind === "property" ? { code: draft.code.trim() } : {}),
       },
@@ -146,7 +150,10 @@ export function RecordDrawer({
               {fields[entry.kind].map((field) => (
                 <label
                   className={
-                    ["title", "address"].includes(field.key) ? "wide" : ""
+                    ["title", "address"].includes(field.key) ||
+                    field.type === "textarea"
+                      ? "wide"
+                      : ""
                   }
                   key={field.key}
                 >
@@ -199,6 +206,15 @@ export function RecordDrawer({
                           </option>
                         ))}
                     </select>
+                  ) : field.type === "textarea" ? (
+                    <textarea
+                      rows={6}
+                      maxLength={10000}
+                      value={draft[field.key] || ""}
+                      onChange={(event) =>
+                        setDraft({ ...draft, [field.key]: event.target.value })
+                      }
+                    />
                   ) : (
                     <input
                       type={field.type || "text"}
@@ -311,7 +327,9 @@ export function RecordDrawer({
                       ) : field.key === "price" || field.key === "budget" ? (
                         money(entry.data[field.key])
                       ) : (
-                        entry.data[field.key] || "—"
+                        (entry.kind === "property"
+                          ? publicDraft(entry.data)[field.key]
+                          : entry.data[field.key]) || "—"
                       )}
                     </dd>
                   </div>
@@ -335,6 +353,9 @@ export function RecordDrawer({
                 canWrite={writable}
                 canDelete={manager}
               />
+            )}
+            {entry.kind === "property" && manager && (
+              <SitePublication entry={entry} />
             )}
             {entry.kind === "request" && (
               <div className="linked-section">

@@ -1,0 +1,4 @@
+# The function explicitly verifies the user's token using auth.getUser(),
+# then checks active CRM membership and owner/technical role on every request.
+[functions.publish-site]
+verify_jwt = false
