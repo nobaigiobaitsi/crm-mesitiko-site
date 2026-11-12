@@ -2228,3 +2228,41 @@ th {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.photo-drag-hint {
+  color: #536c5e;
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0 0 16px;
+}
+.photo-grid figure[draggable="true"] {
+  cursor: grab;
+}
+.photo-grid figure[draggable="true"] a {
+  cursor: grab;
+}
+.photo-grid figure.photo-dragging {
+  opacity: 0.45;
+}
+.photo-grid figure.photo-drop-target {
+  outline: 3px solid #60814c;
+  outline-offset: 2px;
+  background: #e8f0e1;
+}
+.photo-order-actions {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  align-items: center;
+}
+.photo-order-actions button {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+}
+.property-workspace .photo-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
 import type { Photo } from "../domain/model";
 import { preparePhoto } from "../lib/images";
@@ -16,6 +16,16 @@ export function PropertyGallery({
   canWrite: boolean;
   canDelete: boolean;
 }) {
+  const dragSource = useRef<string | null>(null);
+  const mutationInProgress = useRef(false);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState("");
+  function clearDrag() {
+    dragSource.current = null;
+    setDraggedId(null);
+    setDropTarget(null);
+  }
   const [photos, setPhotos] = useState<Photo[]>([]),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
@@ -29,7 +39,8 @@ export function PropertyGallery({
     async function load() {
       try {
         const data = await repository.list(propertyId);
-        if (active) setPhotos(data);
+        if (active && !mutationInProgress.current && !dragSource.current)
+          setPhotos(data);
       } catch (error) {
         if (active) setError((error as Error).message);
       }
@@ -44,7 +55,8 @@ export function PropertyGallery({
     };
   }, [repository, propertyId]);
   async function upload(files: File[]) {
-    if (!files.length) return;
+    if (!files.length || !canWrite || mutationInProgress.current) return;
+    mutationInProgress.current = true;
     setBusy(true);
     setError("");
     try {
@@ -64,10 +76,22 @@ export function PropertyGallery({
       } catch (error) {
         setError((error as Error).message);
       }
+      mutationInProgress.current = false;
       setBusy(false);
     }
   }
   async function move(index: number, target: number) {
+    if (
+      !canWrite ||
+      mutationInProgress.current ||
+      index === target ||
+      index < 0 ||
+      target < 0 ||
+      index >= photos.length ||
+      target >= photos.length
+    )
+      return;
+    mutationInProgress.current = true;
     setBusy(true);
     setError("");
     try {
@@ -78,14 +102,20 @@ export function PropertyGallery({
         propertyId,
         ordered.map((item) => item.id),
       );
-      await refresh();
+      setPhotos(ordered);
+      setAnnouncement(
+        `Η φωτογραφία μετακινήθηκε στη θέση ${target + 1}. Η σειρά αποθηκεύτηκε.`,
+      );
     } catch (error) {
       setError((error as Error).message);
     } finally {
+      mutationInProgress.current = false;
       setBusy(false);
     }
   }
   async function remove(photo: Photo) {
+    if (!canDelete || mutationInProgress.current) return;
+    mutationInProgress.current = true;
     setBusy(true);
     setError("");
     try {
@@ -95,6 +125,7 @@ export function PropertyGallery({
     } catch (error) {
       setError((error as Error).message);
     } finally {
+      mutationInProgress.current = false;
       setBusy(false);
     }
   }
@@ -107,12 +138,74 @@ export function PropertyGallery({
         Φωτογραφίες<span className="count">{photos.length}</span>
       </h3>
       <ErrorNotice message={error} />
-      <div className="photo-grid">
+      {canWrite && photos.length > 1 && (
+        <p className="photo-drag-hint">
+          Σύρετε μια φωτογραφία πάνω σε άλλη για να αλλάξετε τη σειρά. Η πρώτη
+          γίνεται εξώφυλλο. Η σειρά αποθηκεύεται αυτόματα.
+        </p>
+      )}
+      <p className="sr-only" role="status" aria-live="polite">
+        {announcement}
+      </p>
+      <div className="photo-grid" aria-busy={busy}>
         {photos.map((photo, index) => (
-          <figure key={photo.id}>
+          <figure
+            key={photo.id}
+            draggable={canWrite && !busy && photos.length > 1}
+            className={`${draggedId === photo.id ? "photo-dragging" : ""} ${dropTarget === photo.id ? "photo-drop-target" : ""}`}
+            onDragStart={(event) => {
+              if (
+                !canWrite ||
+                busy ||
+                (event.target as HTMLElement).closest("button")
+              ) {
+                event.preventDefault();
+                return;
+              }
+              dragSource.current = photo.id;
+              setDraggedId(photo.id);
+              event.dataTransfer.effectAllowed = "move";
+              event.dataTransfer.setData("text/plain", photo.id);
+            }}
+            onDragOver={(event) => {
+              if (
+                !canWrite ||
+                busy ||
+                !dragSource.current ||
+                dragSource.current === photo.id
+              )
+                return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = "move";
+              setDropTarget(photo.id);
+            }}
+            onDragLeave={(event) => {
+              if (
+                !event.currentTarget.contains(
+                  event.relatedTarget as Node | null,
+                )
+              )
+                setDropTarget(null);
+            }}
+            onDrop={(event) => {
+              if (!dragSource.current || !canWrite || busy) return;
+              event.preventDefault();
+              const source = photos.findIndex(
+                (item) => item.id === dragSource.current,
+              );
+              clearDrag();
+              void move(source, index);
+            }}
+            onDragEnd={clearDrag}
+          >
             {photo.url ? (
-              <a href={photo.url} target="_blank" rel="noreferrer">
-                <img src={photo.url} alt={photo.caption} />
+              <a
+                href={photo.url}
+                target="_blank"
+                rel="noreferrer"
+                draggable={false}
+              >
+                <img src={photo.url} alt={photo.caption} draggable={false} />
               </a>
             ) : (
               <p className="empty">Η εικόνα δεν είναι διαθέσιμη.</p>
