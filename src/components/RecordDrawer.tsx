@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
+  ArrowLeft,
   ArrowUpRight,
   Building2,
   Check,
@@ -28,6 +29,13 @@ import type { PhotoRepository } from "../services/photos";
 import { Badge, ErrorNotice } from "./Common";
 import { SitePublication } from "./SitePublication";
 import { PropertyGallery } from "./PropertyGallery";
+
+const propertySections: Record<string, string> = {
+  title: "Βασικά στοιχεία",
+  site_title_el: "Περιεχόμενο αγγελίας",
+  site_location_el: "Τοποθεσία & σύνδεσμοι",
+  site_bathrooms: "Λεπτομέρειες ακινήτου",
+};
 
 export function RecordDrawer({
   entry,
@@ -114,7 +122,7 @@ export function RecordDrawer({
   return (
     <dialog
       ref={dialog}
-      className="drawer-modal"
+      className={`drawer-modal${entry.kind === "property" ? " property-workspace" : ""}`}
       aria-labelledby="drawer-title"
       onCancel={(event) => {
         event.preventDefault();
@@ -126,11 +134,36 @@ export function RecordDrawer({
     >
       <section className="drawer">
         <div className="drawer-top">
+          {entry.kind === "property" && (
+            <button className="secondary" onClick={onClose} disabled={busy}>
+              <ArrowLeft size={16} /> Επιστροφή
+            </button>
+          )}
           <span className="eyebrow">
             {isNew
               ? "ΝΕΑ ΕΓΓΡΑΦΗ"
               : labels[entry.kind].toLocaleUpperCase("el-GR")}
           </span>
+          {entry.kind === "property" &&
+            writable &&
+            (editing ? (
+              <button
+                className="primary"
+                type="submit"
+                form="record-editor"
+                disabled={busy}
+              >
+                <Check size={16} /> {busy ? "Αποθήκευση…" : "Αποθήκευση"}
+              </button>
+            ) : (
+              <button
+                className="primary"
+                onClick={() => setEditing(true)}
+                disabled={busy}
+              >
+                <NotebookPen size={16} /> Επεξεργασία
+              </button>
+            ))}
           <button
             className="icon-btn"
             aria-label="Κλείσιμο λεπτομερειών"
@@ -145,93 +178,113 @@ export function RecordDrawer({
         </h2>
         <ErrorNotice message={error} />
         {editing ? (
-          <form onSubmit={submit}>
+          <form id="record-editor" onSubmit={submit}>
             <fieldset disabled={busy} className="form-grid drawer-fields">
               {fields[entry.kind].map((field) => (
-                <label
-                  className={
-                    ["title", "address"].includes(field.key) ||
-                    field.type === "textarea"
-                      ? "wide"
-                      : ""
-                  }
-                  key={field.key}
-                >
-                  {field.label}
-                  {field.required && " *"}
-                  {field.options ? (
-                    <select
-                      value={draft[field.key] || field.options[0]}
-                      onChange={(event) =>
-                        setDraft({ ...draft, [field.key]: event.target.value })
-                      }
-                    >
-                      {field.options
-                        .filter(
-                          (option) =>
-                            !(
-                              data.me.role === "agent" &&
-                              field.key === "publication" &&
-                              option === "Εγκεκριμένο" &&
-                              entry.data.publication !== "Εγκεκριμένο"
-                            ),
-                        )
-                        .map((option) => (
-                          <option
-                            key={option}
-                            disabled={
-                              data.me.role === "agent" &&
-                              field.key === "publication" &&
-                              option === "Εγκεκριμένο"
-                            }
-                          >
-                            {option}
-                          </option>
-                        ))}
-                    </select>
-                  ) : field.type === "contact" || field.type === "property" ? (
-                    <select
-                      required={field.required}
-                      value={draft[field.key] || ""}
-                      onChange={(event) =>
-                        setDraft({ ...draft, [field.key]: event.target.value })
-                      }
-                    >
-                      <option value="">Επιλέξτε…</option>
-                      {data.entries
-                        .filter((item) => item.kind === field.type)
-                        .map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.data.title}
-                          </option>
-                        ))}
-                    </select>
-                  ) : field.type === "textarea" ? (
-                    <textarea
-                      rows={6}
-                      maxLength={
-                        field.key.startsWith("site_features_") ? 31000 : 20000
-                      }
-                      value={draft[field.key] || ""}
-                      onChange={(event) =>
-                        setDraft({ ...draft, [field.key]: event.target.value })
-                      }
-                    />
-                  ) : (
-                    <input
-                      type={field.type || "text"}
-                      min={field.type === "number" ? "0" : undefined}
-                      step={field.type === "number" ? "0.01" : undefined}
-                      maxLength={500}
-                      required={field.required}
-                      value={draft[field.key] || ""}
-                      onChange={(event) =>
-                        setDraft({ ...draft, [field.key]: event.target.value })
-                      }
-                    />
+                <Fragment key={field.key}>
+                  {entry.kind === "property" && propertySections[field.key] && (
+                    <h3 className="property-form-heading">
+                      {propertySections[field.key]}
+                    </h3>
                   )}
-                  {field.help && <small>{field.help}</small>}
-                </label>
+                  <label
+                    className={
+                      ["title", "address"].includes(field.key) ||
+                      field.type === "textarea"
+                        ? "wide"
+                        : ""
+                    }
+                    key={field.key}
+                  >
+                    {field.label}
+                    {field.required && " *"}
+                    {field.options ? (
+                      <select
+                        value={draft[field.key] || field.options[0]}
+                        onChange={(event) =>
+                          setDraft({
+                            ...draft,
+                            [field.key]: event.target.value,
+                          })
+                        }
+                      >
+                        {field.options
+                          .filter(
+                            (option) =>
+                              !(
+                                data.me.role === "agent" &&
+                                field.key === "publication" &&
+                                option === "Εγκεκριμένο" &&
+                                entry.data.publication !== "Εγκεκριμένο"
+                              ),
+                          )
+                          .map((option) => (
+                            <option
+                              key={option}
+                              disabled={
+                                data.me.role === "agent" &&
+                                field.key === "publication" &&
+                                option === "Εγκεκριμένο"
+                              }
+                            >
+                              {option}
+                            </option>
+                          ))}
+                      </select>
+                    ) : field.type === "contact" ||
+                      field.type === "property" ? (
+                      <select
+                        required={field.required}
+                        value={draft[field.key] || ""}
+                        onChange={(event) =>
+                          setDraft({
+                            ...draft,
+                            [field.key]: event.target.value,
+                          })
+                        }
+                      >
+                        <option value="">Επιλέξτε…</option>
+                        {data.entries
+                          .filter((item) => item.kind === field.type)
+                          .map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.data.title}
+                            </option>
+                          ))}
+                      </select>
+                    ) : field.type === "textarea" ? (
+                      <textarea
+                        rows={6}
+                        maxLength={
+                          field.key.startsWith("site_features_") ? 31000 : 20000
+                        }
+                        value={draft[field.key] || ""}
+                        onChange={(event) =>
+                          setDraft({
+                            ...draft,
+                            [field.key]: event.target.value,
+                          })
+                        }
+                      />
+                    ) : (
+                      <input
+                        type={field.type || "text"}
+                        min={field.type === "number" ? "0" : undefined}
+                        step={field.type === "number" ? "0.01" : undefined}
+                        maxLength={500}
+                        required={field.required}
+                        value={draft[field.key] || ""}
+                        onChange={(event) =>
+                          setDraft({
+                            ...draft,
+                            [field.key]: event.target.value,
+                          })
+                        }
+                      />
+                    )}
+                    {field.help && <small>{field.help}</small>}
+                  </label>
+                </Fragment>
               ))}
               <label className="wide">
                 Υπεύθυνος
@@ -302,7 +355,12 @@ export function RecordDrawer({
               {fields[entry.kind]
                 .filter((field) => field.key !== "title")
                 .map((field) => (
-                  <div key={field.key}>
+                  <div
+                    key={field.key}
+                    className={
+                      field.type === "textarea" ? "detail-wide" : undefined
+                    }
+                  >
                     <dt>{field.label}</dt>
                     <dd>
                       {["contact", "property"].includes(field.type || "") &&
