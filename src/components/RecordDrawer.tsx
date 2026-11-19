@@ -149,6 +149,7 @@ export function RecordDrawer({
             (editing ? (
               <button
                 className="primary"
+                key="save-property"
                 type="submit"
                 form="record-editor"
                 disabled={busy}
@@ -158,6 +159,8 @@ export function RecordDrawer({
             ) : (
               <button
                 className="primary"
+                key="edit-property"
+                type="button"
                 onClick={() => setEditing(true)}
                 disabled={busy}
               >
@@ -487,7 +490,7 @@ export function RecordDrawer({
                 </button>
               )}
               {writable && (
-                <button className="primary" onClick={() => setEditing(true)}>
+                <button type="button" className="primary" onClick={() => setEditing(true)}>
                   <NotebookPen size={16} />
                   Επεξεργασία
                 </button>
