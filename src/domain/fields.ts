@@ -7,93 +7,139 @@ export type Field = {
   required?: boolean;
   help?: string;
 };
+export const propertySections: {
+  id: string;
+  title: string;
+  fields: Field[];
+}[] = [
+  {
+    id: "titles",
+    title: "Τίτλοι & κωδικός",
+    fields: [
+      { key: "title", label: "Τίτλος ακινήτου στο CRM", required: true },
+      { key: "code", label: "Κωδικός", required: true },
+      { key: "site_title_el", label: "Δημόσιος τίτλος · Ελληνικά" },
+      { key: "site_title_en", label: "Δημόσιος τίτλος · English" },
+    ],
+  },
+  {
+    id: "transaction",
+    title: "Συναλλαγή & κατάσταση",
+    fields: [
+      {
+        key: "transaction",
+        label: "Συναλλαγή",
+        options: ["Πώληση", "Ενοικίαση"],
+      },
+      { key: "price", label: "Τιμή (€)", type: "number", required: true },
+      {
+        key: "status",
+        label: "Εμπορική κατάσταση",
+        options: [
+          "Διαθέσιμο",
+          "Υπό διαπραγμάτευση",
+          "Πουλήθηκε",
+          "Ενοικιάστηκε",
+          "Ανενεργό",
+        ],
+      },
+      {
+        key: "publication",
+        label: "Εσωτερική έγκριση",
+        options: ["Πρόχειρο", "Προς έγκριση", "Εγκεκριμένο"],
+      },
+    ],
+  },
+  {
+    id: "facts",
+    title: "Χαρακτηριστικά ακινήτου",
+    fields: [
+      {
+        key: "type",
+        label: "Τύπος ακινήτου",
+        options: [
+          "Διαμέρισμα",
+          "Μονοκατοικία",
+          "Μεζονέτα",
+          "Οικόπεδο",
+          "Επαγγελματικός χώρος",
+        ],
+      },
+      { key: "sqm", label: "Εμβαδόν (τ.μ.)", type: "number", required: true },
+      { key: "beds", label: "Υπνοδωμάτια", type: "number" },
+      { key: "site_bathrooms", label: "Μπάνια", type: "number" },
+      { key: "site_floor_el", label: "Όροφος · Ελληνικά" },
+      { key: "site_floor_en", label: "Όροφος · English" },
+      { key: "site_heating_el", label: "Θέρμανση · Ελληνικά" },
+      { key: "site_heating_en", label: "Θέρμανση · English" },
+      { key: "site_year", label: "Έτος κατασκευής", type: "number" },
+      { key: "site_energy_class", label: "Ενεργειακή κλάση" },
+    ],
+  },
+  {
+    id: "location",
+    title: "Τοποθεσία",
+    fields: [
+      { key: "area", label: "Περιοχή", required: true },
+      { key: "address", label: "Ακριβής διεύθυνση (εσωτερική)" },
+      { key: "site_location_el", label: "Δημόσια τοποθεσία · Ελληνικά" },
+      { key: "site_location_en", label: "Δημόσια τοποθεσία · English" },
+    ],
+  },
+  {
+    id: "content",
+    title: "Περιγραφή & παροχές",
+    fields: [
+      {
+        key: "site_description_el",
+        label: "Δημόσια περιγραφή · Ελληνικά",
+        help: "Οι αλλαγές γραμμής και οι κενές γραμμές διατηρούνται στο site. Απλό κείμενο, χωρίς HTML.",
+        type: "textarea",
+      },
+      {
+        key: "site_description_en",
+        label: "Δημόσια περιγραφή · English",
+        help: "Οι αλλαγές γραμμής και οι κενές γραμμές διατηρούνται στο site. Απλό κείμενο, χωρίς HTML.",
+        type: "textarea",
+      },
+      {
+        key: "site_features_el",
+        label: "Χαρακτηριστικά & Παροχές · Ελληνικά",
+        type: "textarea",
+        help: "Μία παροχή ανά γραμμή, έως 60 παροχές και 500 χαρακτήρες ανά παροχή. Δεν χρειάζονται κουκκίδες.",
+      },
+      {
+        key: "site_features_en",
+        label: "Χαρακτηριστικά & Παροχές · English",
+        type: "textarea",
+        help: "Μία παροχή ανά γραμμή. Συμπληρώστε ξεχωριστά την αγγλική μετάφραση. Κενή λίστα = απόκρυψη ενότητας.",
+      },
+    ],
+  },
+  {
+    id: "links",
+    title: "Σύνδεσμοι & εξώφυλλο",
+    fields: [
+      {
+        key: "site_path_el",
+        label: "Διαδρομή σελίδας · Ελληνικά (π.χ. /akinito-001/)",
+      },
+      {
+        key: "site_path_en",
+        label: "Διαδρομή σελίδας · English (π.χ. /en/property-001/)",
+      },
+      { key: "photo", label: "Φωτογραφία εξωφύλλου (HTTPS URL)", type: "url" },
+    ],
+  },
+  {
+    id: "management",
+    title: "Εσωτερική διαχείριση",
+    fields: [{ key: "contact", label: "Ιδιοκτήτης ακινήτου", type: "contact" }],
+  },
+];
+
 export const fields: Record<Kind, Field[]> = {
-  property: [
-    { key: "title", label: "Τίτλος ακινήτου", required: true },
-    { key: "code", label: "Κωδικός", required: true },
-    { key: "area", label: "Περιοχή", required: true },
-    { key: "address", label: "Ακριβής διεύθυνση (εσωτερική)" },
-    { key: "photo", label: "Φωτογραφία εξωφύλλου (HTTPS URL)", type: "url" },
-    {
-      key: "type",
-      label: "Τύπος",
-      options: [
-        "Διαμέρισμα",
-        "Μονοκατοικία",
-        "Μεζονέτα",
-        "Οικόπεδο",
-        "Επαγγελματικός χώρος",
-      ],
-    },
-    {
-      key: "transaction",
-      label: "Συναλλαγή",
-      options: ["Πώληση", "Ενοικίαση"],
-    },
-    { key: "price", label: "Τιμή (€)", type: "number", required: true },
-    { key: "sqm", label: "Εμβαδόν (τ.μ.)", type: "number", required: true },
-    { key: "beds", label: "Υπνοδωμάτια", type: "number" },
-    {
-      key: "status",
-      label: "Εμπορική κατάσταση",
-      options: [
-        "Διαθέσιμο",
-        "Υπό διαπραγμάτευση",
-        "Πουλήθηκε",
-        "Ενοικιάστηκε",
-        "Ανενεργό",
-      ],
-    },
-    {
-      key: "publication",
-      label: "Εσωτερική έγκριση",
-      options: ["Πρόχειρο", "Προς έγκριση", "Εγκεκριμένο"],
-    },
-    { key: "contact", label: "Ιδιοκτήτης ακινήτου", type: "contact" },
-    { key: "site_title_el", label: "Δημόσιος τίτλος · Ελληνικά" },
-    { key: "site_title_en", label: "Δημόσιος τίτλος · English" },
-    {
-      key: "site_description_el",
-      label: "Δημόσια περιγραφή · Ελληνικά",
-      help: "Οι αλλαγές γραμμής και οι κενές γραμμές διατηρούνται στο site. Απλό κείμενο, χωρίς HTML.",
-      type: "textarea",
-    },
-    {
-      key: "site_description_en",
-      label: "Δημόσια περιγραφή · English",
-      help: "Οι αλλαγές γραμμής και οι κενές γραμμές διατηρούνται στο site. Απλό κείμενο, χωρίς HTML.",
-      type: "textarea",
-    },
-    {
-      key: "site_features_el",
-      label: "Χαρακτηριστικά & Παροχές · Ελληνικά",
-      type: "textarea",
-      help: "Μία παροχή ανά γραμμή, έως 60 παροχές και 500 χαρακτήρες ανά παροχή. Δεν χρειάζονται κουκκίδες.",
-    },
-    {
-      key: "site_features_en",
-      label: "Χαρακτηριστικά & Παροχές · English",
-      type: "textarea",
-      help: "Μία παροχή ανά γραμμή. Συμπληρώστε ξεχωριστά την αγγλική μετάφραση. Κενή λίστα = απόκρυψη ενότητας.",
-    },
-    { key: "site_location_el", label: "Δημόσια τοποθεσία · Ελληνικά" },
-    { key: "site_location_en", label: "Δημόσια τοποθεσία · English" },
-    {
-      key: "site_path_el",
-      label: "Διαδρομή σελίδας · Ελληνικά (π.χ. /akinito-001/)",
-    },
-    {
-      key: "site_path_en",
-      label: "Διαδρομή σελίδας · English (π.χ. /en/property-001/)",
-    },
-    { key: "site_bathrooms", label: "Μπάνια", type: "number" },
-    { key: "site_floor_el", label: "Όροφος · Ελληνικά" },
-    { key: "site_floor_en", label: "Όροφος · English" },
-    { key: "site_heating_el", label: "Θέρμανση · Ελληνικά" },
-    { key: "site_heating_en", label: "Θέρμανση · English" },
-    { key: "site_energy_class", label: "Ενεργειακή κλάση" },
-    { key: "site_year", label: "Έτος κατασκευής", type: "number" },
-  ],
+  property: propertySections.flatMap((section) => section.fields),
   contact: [
     { key: "title", label: "Ονοματεπώνυμο", required: true },
     {
