@@ -1,3 +1,4 @@
+import { importedPublicFields, importedPhotoLabels } from './legacy-listing.js';
 const types = { 'Διαμέρισμα':'diamerisma', 'Μονοκατοικία':'monokatoikia', 'Μεζονέτα':'mezoneta', 'Οικόπεδο':'oikopedo', 'Επαγγελματικός χώρος':'epaggelmatikos' };
 function string(value, max = 500, required = false) {
   if (typeof value !== 'string' || value.length > max || (required && !value.trim())) throw new Error('Συμπληρώστε σωστά τα δημόσια στοιχεία του ακινήτου.');
@@ -21,6 +22,12 @@ export function publicPayload(data, photos) {
   if (!['Διαθέσιμο','Υπό διαπραγμάτευση','Πουλήθηκε','Ενοικιάστηκε'].includes(data.status)) throw new Error('Το ανενεργό ακίνητο πρέπει να αποσυρθεί.');
   let source;
   try { source=JSON.parse(data.website_json); } catch { throw new Error('Συμπληρώστε την καρτέλα δημοσίευσης.'); }
+  const imported = data.import_source === 'leaf-site-v1';
+  if (imported) {
+    // Project even on a direct publish of a record the new editor never saved.
+    const fields = importedPublicFields(source);
+    source = {id:source.id, slug:source.slug, bathrooms:source.bathrooms, year:source.year, ...fields};
+  }
   const locales={};
   for (const lang of ['el','en']) {
     const l=source.locales?.[lang];
@@ -38,6 +45,13 @@ export function publicPayload(data, photos) {
     format:['text','number','sqm','metres','levels'].includes(f.format)?f.format:'text',
     value:typeof f.value==='number'?number(f.value):bilingual(f.value),
   }));
+  if (source.year != null && source.year !== '') {
+    const previous = additionalFacts.findIndex(f => f.key === 'yearBuilt');
+    const year = {key:'yearBuilt', icon:'', label:{el:'Έτος κατασκευής', en:'Year built'}, format:'number', value:number(source.year,9999)};
+    if (previous >= 0) additionalFacts[previous] = year;
+    else additionalFacts.push(year);
+  }
+  if (imported) photos = importedPhotoLabels(photos, locales);
   let mapUrl='';
   if (source.mapUrl) {
     const u=new URL(source.mapUrl);
@@ -48,11 +62,11 @@ export function publicPayload(data, photos) {
   if (!/^[a-zA-Z0-9_-]+$/.test(id)) throw new Error('Μη έγκυρος δημόσιος κωδικός.');
   const slug=string(source.slug || id,150,true);
   if (!/^[a-zA-Z0-9_-]+$/.test(slug)) throw new Error('Μη έγκυρο slug.');
-  return {id,slug,reference:string(source.reference || data.code,100,true),
+  return {...(imported ? {publicFieldsVersion:2} : {}),id,slug,reference:string(source.reference || data.code,100,true),
     transaction:data.transaction==='Ενοικίαση'?'rent':'buy',type:types[data.type],
     status:data.status==='Πουλήθηκε'?'sold':data.status==='Ενοικιάστηκε'?'rented':'available',
-    area:string(source.area || data.area,200,true),price:number(data.price),sqm:number(data.sqm),rooms:number(data.beds),
-    bathrooms:number(source.bathrooms,100),wc:number(source.wc,100),additionalFacts,mapUrl,locales,
+    area:string(source.area || data.area,200,true),price:number(data.price),sqm:number(data.sqm),rooms:data.beds == null || data.beds === '' ? null : number(data.beds),
+    bathrooms:source.bathrooms == null || source.bathrooms === '' ? null : number(source.bathrooms,100),wc:number(source.wc,100),additionalFacts,mapUrl,locales,
     photos,cover:photos[0].src,
   };
 }

@@ -1,4 +1,6 @@
 import type { RecordData } from "./model";
+import { importedPublicFields } from "../../supabase/functions/_shared/legacy-listing.js";
+
 export function publicDraft(data: RecordData): RecordData {
   let website: any = {};
   try {
@@ -6,6 +8,8 @@ export function publicDraft(data: RecordData): RecordData {
   } catch {
     /* editing can repair invalid JSON */
   }
+  if (data.import_source === "leaf-site-v1")
+    Object.assign(website, importedPublicFields(website));
   const facts = website.additionalFacts || [];
   const fact = (key: string, lang: string) =>
     facts.find((item: any) => item.key === key)?.value?.[lang] || "";
@@ -36,6 +40,11 @@ export function savePublicDraft(data: RecordData): RecordData {
     website = JSON.parse(data.website_json || "{}");
   } catch {
     /* reconstruct */
+  }
+  if (data.import_source === "leaf-site-v1") {
+    // Only the stable identity is needed from the old record. The form below
+    // rebuilds the public content, including intentionally empty values.
+    website = { id: website.id, slug: website.slug, publicFieldsVersion: 2 };
   }
   website.locales ||= {};
   for (const lang of ["el", "en"]) {

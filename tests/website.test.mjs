@@ -78,3 +78,97 @@ test("public text and feature lists survive editing and publication in both lang
   draft.site_features_el = "x".repeat(501);
   assert.throws(() => savePublicDraft(draft), /500/);
 });
+
+test("all six imported records publish safely before and after editing, without legacy content", async () => {
+  const { publicPayload } =
+    await import("../supabase/functions/_shared/publication.js");
+  const { readFile } = await import("node:fs/promises");
+  const originals = JSON.parse(
+    await readFile(
+      new URL("../import/site/catalog.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  for (const p of originals) {
+    const data = {
+      import_source: "leaf-site-v1",
+      website_json: JSON.stringify(p),
+      code: "CRM-" + p.id,
+      area: "Current area",
+      address: "PRIVATE ADDRESS",
+      status: "Διαθέσιμο",
+      publication: "Εγκεκριμένο",
+      type: "Διαμέρισμα",
+    };
+    const photos = [
+      {
+        src: "crm://photo.jpg",
+        alt: { el: "PRIVATE CAPTION", en: "PRIVATE CAPTION" },
+      },
+    ];
+    const direct = publicPayload(data, photos);
+    const draft = publicDraft(data);
+    assert.equal(direct.area, data.area);
+    assert.equal(direct.reference, data.code);
+    assert.equal(direct.mapUrl, "");
+    assert.ok(
+      direct.additionalFacts.every((f) =>
+        ["floor", "heating", "energyClass"].includes(f.key),
+      ),
+    );
+    assert.doesNotMatch(
+      JSON.stringify(direct),
+      /PRIVATE (?:ADDRESS|CAPTION)|agrielias|αγριελιάς|σοφοκλέους|sofokleous|filellinon|φιλελλήνων/i,
+    );
+    for (const lang of ["el", "en"]) {
+      assert.equal(direct.locales[lang].address, p.locales[lang].cardAddress);
+      assert.equal(direct.locales[lang].location, "");
+      assert.equal(direct.locales[lang].path, draft["site_path_" + lang]);
+      draft["site_location_" + lang] = "";
+      draft["site_features_" + lang] = "";
+    }
+    draft.site_year = "2004";
+    const saved = savePublicDraft(draft);
+    assert.equal(saved.address, "PRIVATE ADDRESS");
+    assert.equal(JSON.parse(saved.website_json).mapUrl, undefined);
+    const next = publicPayload(saved, photos);
+    assert.equal(next.locales.en.address, "");
+    assert.equal(next.locales.el.cardAddress, "");
+    assert.deepEqual(next.locales.el.features, []);
+    assert.equal(
+      next.additionalFacts.find((f) => f.key === "yearBuilt").value,
+      2004,
+    );
+    draft.site_year = "";
+    draft.site_location_el = "Νέα δημόσια περιοχή";
+    draft.site_path_el = "/new-" + p.id + "/";
+    const edited = publicPayload(savePublicDraft(draft), photos);
+    assert.equal(edited.locales.el.address, draft.site_location_el);
+    assert.equal(edited.locales.el.path, draft.site_path_el);
+    assert.ok(!edited.additionalFacts.some((f) => f.key === "yearBuilt"));
+  }
+});
+
+test("a location duplicated by the previous editor is cleaned on opening the imported draft", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const originals = JSON.parse(
+    await readFile(
+      new URL("../import/site/catalog.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  for (const source of originals.slice(0, 3)) {
+    const p = structuredClone(source);
+    for (const lang of ["el", "en"])
+      p.locales[lang].cardAddress = p.locales[lang].address;
+    const draft = publicDraft({
+      import_source: "leaf-site-v1",
+      website_json: JSON.stringify(p),
+    });
+    for (const lang of ["el", "en"])
+      assert.equal(
+        draft["site_location_" + lang],
+        source.locales[lang].cardAddress,
+      );
+  }
+});
