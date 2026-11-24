@@ -16,7 +16,7 @@ export function PropertyTable({
 }) {
   return (
     <div className="table-scroll">
-      <table>
+      <table className="property-table">
         <thead>
           <tr>
             <th>ΑΚΙΝΗΤΟ</th>
@@ -67,18 +67,22 @@ export function PropertyTable({
                 </button>
               </td>
               <td>
+                <span className="mobile-field-label" aria-hidden="true">Τιμή</span>
                 <strong className="price">{money(entry.data.price)}</strong>
                 <small>{entry.data.transaction}</small>
               </td>
               <td>
+                <span className="mobile-field-label" aria-hidden="true">Κατάσταση</span>
                 <Badge value={entry.data.status} />
               </td>
               {!compact && (
                 <td>
+                  <span className="mobile-field-label" aria-hidden="true">Έγκριση</span>
                   <Badge value={entry.data.publication} />
                 </td>
               )}
               <td>
+                <span className="mobile-field-label" aria-hidden="true">Υπεύθυνος</span>
                 <Person members={members} id={entry.assigned_to} />
               </td>
               <td>

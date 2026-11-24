@@ -79,7 +79,7 @@ export function RecordCollection({
             aria-label="Αναζήτηση εγγραφών"
             placeholder={
               kind === "property"
-                ? "Αναζήτηση τίτλου, κωδικού ή περιοχής…"
+                ? "Τίτλος, κωδικός ή περιοχή…"
                 : "Αναζήτηση…"
             }
             value={query}
