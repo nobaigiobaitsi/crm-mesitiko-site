@@ -1,5 +1,6 @@
 import { Building2, ChevronRight } from "lucide-react";
 import { money, type Entry, type Member } from "../domain/model";
+import { recordMunicipalityName } from "../domain/municipality";
 import { Badge, Empty, Person } from "./Common";
 
 export function PropertyTable({
@@ -58,7 +59,7 @@ export function PropertyTable({
                     <small>
                       {entry.data.code}
                       <b>·</b>
-                      {entry.data.area}
+                      {recordMunicipalityName(entry.data) || entry.data.area}
                       <b>·</b>
                       {entry.data.sqm} τ.μ.
                     </small>

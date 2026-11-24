@@ -22,6 +22,8 @@ import {
   type Workspace,
 } from "../domain/model";
 import { Badge, Empty, Person } from "./Common";
+import { MunicipalitySelect } from "./MunicipalitySelect";
+import { recordMunicipalityId, recordMunicipalityName } from "../domain/municipality";
 import { PropertyTable } from "./PropertyTable";
 import { TaskList } from "./TaskList";
 
@@ -39,6 +41,7 @@ export function RecordCollection({
   busy: boolean;
 }) {
   const [query, setQuery] = useState(""),
+    [municipality, setMunicipality] = useState(""),
     [status, setStatus] = useState(""),
     [assignee, setAssignee] = useState("");
   const filters =
@@ -52,12 +55,14 @@ export function RecordCollection({
       (entry) =>
         !status || entry.data.status === status || entry.data.type === status,
     )
+    .filter((entry) => kind !== "property" || !municipality || recordMunicipalityId(entry.data) === municipality)
     .filter((entry) => !assignee || entry.assigned_to === assignee)
     .filter((entry) =>
       normalizeText(
         [
           entry.data.title,
           entry.data.area,
+          kind === "property" ? recordMunicipalityName(entry.data) : "",
           entry.data.code,
           entry.data.email,
           entry.data.phone,
@@ -89,6 +94,14 @@ export function RecordCollection({
             </button>
           )}
         </div>
+        {kind === "property" && (
+          <MunicipalitySelect
+            id="collection-municipality"
+            label="Φίλτρο δήμου"
+            value={municipality}
+            onChange={setMunicipality}
+          />
+        )}
         <label className="filter">
           <SlidersHorizontal size={16} />
           <select

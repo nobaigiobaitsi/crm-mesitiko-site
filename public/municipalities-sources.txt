@@ -1,0 +1,14 @@
+Κατάλογος δήμων της Ελλάδας / Greek municipality directory
+
+Πηγή: Ελληνική Στατιστική Αρχή (ΕΛΣΤΑΤ), Μητρώο Δήμων, Κοινοτήτων & Οικισμών (SKA01), Διοικητικές Μεταβολές (SMD02) και Απογραφή Πληθυσμού-Κατοικιών 2021.
+Τα δεδομένα έχουν τροποποιηθεί από την αρχική δημοσιευμένη μορφή τους. Η ΕΛΣΤΑΤ δεν φέρει ευθύνη για το αποτέλεσμα της τροποποίησης.
+
+Source: Hellenic Statistical Authority (ELSTAT), Register of Municipalities, Communities and Settlements (SKA01), Administrative Changes (SMD02), and the 2021 Population-Housing Census.
+This data has been modified from its original published form. ELSTAT bears no responsibility for the result of the modification.
+https://www.statistics.gr/el/statistics/-/publication/SKA01/2026
+
+The municipality names were checked against the 2026 register distributed by greek-ota.
+https://github.com/AchillesKal/greek-ota
+Greek and English place names were cross-referenced with GeoGreece.
+https://www.geogreece.gr/dimoi_en.php
+LEAF supplies the display forms, stable filter keys and mappings for historical listings.

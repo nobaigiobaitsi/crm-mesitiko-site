@@ -28,6 +28,9 @@ import { validateEntry } from "../domain/records";
 import type { PhotoRepository } from "../services/photos";
 import { Badge, ErrorNotice } from "./Common";
 import { SitePublication } from "./SitePublication";
+import { MunicipalitySelect } from "./MunicipalitySelect";
+import { recordMunicipalityName } from "../domain/municipality";
+import { municipalityById } from "../../supabase/functions/_shared/municipalities.js";
 import { PropertyGallery } from "./PropertyGallery";
 
 export function RecordDrawer({
@@ -113,6 +116,7 @@ export function RecordDrawer({
     (item) => item.data.contact === entry.id || item.data.property === entry.id,
   );
   const isProperty = entry.kind === "property";
+  const details = isProperty && !editing ? publicDraft(entry.data) : entry.data;
   const sections = isProperty
     ? propertySections
     : [{ id: "management", title: "", fields: fields[entry.kind] }];
@@ -226,7 +230,21 @@ export function RecordDrawer({
                     >
                       {field.label}
                       {field.required && " *"}
-                      {field.options ? (
+                      {field.type === "municipality" ? (
+                        <MunicipalitySelect
+                          id="record-municipality"
+                          label={field.label}
+                          value={draft.municipalityId}
+                          required
+                          disabled={busy}
+                          onChange={(id: string) => setDraft({
+                            ...draft,
+                            municipalityId: id,
+                            area: draft.area === municipalityById(draft.municipalityId)?.el
+                              ? municipalityById(id)?.el || "" : draft.area,
+                          })}
+                        />
+                      ) : field.options ? (
                         <select
                           value={draft[field.key] || field.options[0]}
                           onChange={(event) =>
@@ -412,6 +430,8 @@ export function RecordDrawer({
                           {recordTitle(data.entries, entry.data[field.key])}
                           <ArrowUpRight size={13} />
                         </button>
+                      ) : field.type === "municipality" ? (
+                        recordMunicipalityName(entry.data) || "Εκκρεμεί επιλογή δήμου"
                       ) : field.key === "email" && entry.data.email ? (
                         <a href={`mailto:${entry.data.email}`}>
                           {entry.data.email}
@@ -423,9 +443,7 @@ export function RecordDrawer({
                       ) : field.key === "price" || field.key === "budget" ? (
                         money(entry.data[field.key])
                       ) : (
-                        (entry.kind === "property"
-                          ? publicDraft(entry.data)[field.key]
-                          : entry.data[field.key]) || "—"
+                        details[field.key] || "—"
                       )}
                     </dd>
                   </div>

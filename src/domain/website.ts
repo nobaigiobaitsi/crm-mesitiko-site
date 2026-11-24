@@ -1,3 +1,4 @@
+import { recordMunicipalityId, recordMunicipalityName } from "./municipality.ts";
 import type { RecordData } from "./model";
 import { importedPublicFields } from "../../supabase/functions/_shared/legacy-listing.js";
 
@@ -15,6 +16,7 @@ export function publicDraft(data: RecordData): RecordData {
     facts.find((item: any) => item.key === key)?.value?.[lang] || "";
   return {
     ...data,
+    municipalityId: recordMunicipalityId(data),
     site_title_el: website.locales?.el?.title || "",
     site_title_en: website.locales?.en?.title || "",
     site_description_el: website.locales?.el?.description || "",
@@ -94,7 +96,12 @@ export function savePublicDraft(data: RecordData): RecordData {
         format: "text",
       });
   }
-  const result: RecordData = { ...data, website_json: JSON.stringify(website) };
+  const result: RecordData = {
+    ...data,
+    // Existing database installations require a non-empty area string.
+    area: data.area?.trim() || recordMunicipalityName(data),
+    website_json: JSON.stringify(website),
+  };
   for (const key of Object.keys(result))
     if (key.startsWith("site_")) delete result[key];
   return result;

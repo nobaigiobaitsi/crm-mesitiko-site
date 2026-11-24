@@ -1,3 +1,6 @@
+import { legacyMunicipalityId } from "../../supabase/functions/_shared/municipalities.js";
+import { recordMunicipalityId } from "./municipality.ts";
+
 export type Kind = "property" | "contact" | "request" | "appointment" | "task";
 export type Role = "owner" | "technical" | "agent";
 export type View = "dashboard" | Kind | "team" | "settings" | "history";
@@ -102,6 +105,7 @@ function numeric(value?: string) {
   return value?.trim() && Number.isFinite(Number(value)) ? Number(value) : null;
 }
 export function matches(request: Entry, properties: Entry[]) {
+  const requestedMunicipality = legacyMunicipalityId(request.data.area);
   const budget = numeric(request.data.budget),
     minArea = numeric(request.data.minsqm),
     minBeds = numeric(request.data.minbeds);
@@ -109,14 +113,15 @@ export function matches(request: Entry, properties: Entry[]) {
     const price = numeric(property.data.price),
       area = numeric(property.data.sqm),
       beds = numeric(property.data.beds);
+    const municipality = requestedMunicipality ? recordMunicipalityId(property.data) : "";
     return (
       property.kind === "property" &&
       property.data.status === "Διαθέσιμο" &&
       property.data.transaction === request.data.transaction &&
       (!request.data.area ||
-        normalizeText(property.data.area || "").includes(
-          normalizeText(request.data.area),
-        )) &&
+        (municipality
+          ? municipality === requestedMunicipality
+          : normalizeText(property.data.area || "").includes(normalizeText(request.data.area)))) &&
       (budget === null || (price !== null && price <= budget)) &&
       (minArea === null || (area !== null && area >= minArea)) &&
       (minBeds === null || (beds !== null && beds >= minBeds))

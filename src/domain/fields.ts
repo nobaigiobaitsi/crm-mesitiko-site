@@ -80,7 +80,11 @@ export const propertySections: {
     id: "location",
     title: "Τοποθεσία",
     fields: [
-      { key: "area", label: "Περιοχή", required: true },
+      {
+        key: "municipalityId", label: "Περιοχή αναζήτησης (δήμος)", type: "municipality", required: true,
+        help: "Χρησιμοποιείται στα φίλτρα και στα χαρακτηριστικά της αγγελίας.",
+      },
+      { key: "area", label: "Τοπική ονομασία στο CRM (προαιρετικά)" },
       { key: "address", label: "Ακριβής διεύθυνση (εσωτερική)" },
       { key: "site_location_el", label: "Δημόσια τοποθεσία · Ελληνικά" },
       { key: "site_location_en", label: "Δημόσια τοποθεσία · English" },

@@ -2289,3 +2289,14 @@ th {
 .property-workspace .photo-grid {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
 }
+
+.municipality-select { min-width: 0; }
+.municipality-select .municipality__control {
+  min-height: 42px;
+  border-color: var(--line);
+  border-radius: 6px;
+  font-weight: 400;
+}
+.municipality-select input { min-height: 0; box-shadow: none; }
+.municipality-select .municipality__menu { z-index: 5; font-weight: 400; }
+.collection-toolbar .municipality-select { width: min(235px, 100%); font-size: 12px; }

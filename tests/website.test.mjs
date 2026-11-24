@@ -172,3 +172,36 @@ test("a location duplicated by the previous editor is cleaned on opening the imp
       );
   }
 });
+
+test("the chosen municipality survives reopening and publishing independently of captions and obsolete areas", async () => {
+  const { publicPayload } = await import("../supabase/functions/_shared/publication.js");
+  const { validateEntry } = await import("../src/domain/records.ts");
+  const { matches } = await import("../src/domain/model.ts");
+  const photo = [{ src: "crm://photo.jpg" }];
+  const caption = "Παράδεισος Αμαρουσίου, στα σύνορα με Χαλάνδρι";
+  for (const import_source of ["", "leaf-site-v1"]) {
+    const draft = publicDraft({
+      title: "Διαμέρισμα", code: "LF-test", area: "Παλιό εσωτερικό κείμενο",
+      import_source, publication: "Εγκεκριμένο", status: "Διαθέσιμο", transaction: "Πώληση",
+      type: "Διαμέρισμα", price: "100", sqm: "60", website_json: JSON.stringify({ area: "chalandri" }),
+    });
+    Object.assign(draft, { municipalityId: "marousi", site_location_el: caption, site_location_en: "Paradisos, near Chalandri" });
+    for (const lang of ["el", "en"]) {
+      draft["site_title_" + lang] = "Test";
+      draft["site_description_" + lang] = "Test";
+      draft["site_path_" + lang] = lang === "el" ? "/test/" : "/en/test/";
+    }
+    const saved = savePublicDraft(draft);
+    assert.equal(publicDraft(saved).municipalityId, "marousi");
+    assert.equal(saved.area, draft.area);
+    const entry = { kind: "property", data: saved, assigned_to: "owner" };
+    validateEntry(entry, []);
+    assert.deepEqual(matches({ data: { area: "Μαρούσι", transaction: "Πώληση" } }, [entry]), [entry]);
+    const published = publicPayload(saved, photo);
+    assert.equal(published.municipalityId, "marousi");
+    assert.equal(published.locales.el.cardAddress, caption);
+    assert.equal(published.locales.en.address, draft.site_location_en);
+    assert.ok(!JSON.stringify(published).includes(draft.area));
+    assert.throws(() => publicPayload({ ...saved, municipalityId: "invented" }, photo), /δήμο/);
+  }
+});

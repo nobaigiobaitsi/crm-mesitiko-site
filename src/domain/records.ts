@@ -1,3 +1,4 @@
+import { recordMunicipalityId } from "./municipality.ts";
 import { fields } from "./fields.ts";
 import {
   today,
@@ -27,7 +28,9 @@ export function createEntry(kind: Kind, member: Member): Entry {
 }
 export function validateEntry(entry: Entry, records: Entry[]) {
   for (const field of fields[entry.kind]) {
-    const value = entry.data[field.key]?.trim() || "";
+    const value = field.type === "municipality"
+      ? recordMunicipalityId(entry.data)
+      : entry.data[field.key]?.trim() || "";
     if (field.required && !value)
       throw new Error(`Συμπληρώστε: ${field.label}.`);
     if (

@@ -130,6 +130,7 @@ export function Settings({
             {data.me.name} · {roleLabels[data.me.role]}
           </p>
           <p>Οι εγγραφές αποθηκεύονται στην κοινή βάση της Leaf Properties.</p>
+          <a href={`${import.meta.env.BASE_URL}municipalities-sources.txt`}>Πηγή γεωγραφικών δεδομένων</a>
           <button className="secondary" disabled={busy} onClick={onRefresh}>
             <RefreshCw size={15} />
             Ανανέωση δεδομένων
